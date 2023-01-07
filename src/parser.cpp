@@ -493,6 +493,29 @@ void printControlFlow()
     std::cout << "No main function (entry point) defined" << std::endl;
     return;
   }
+  neededFunctions.insert(std::pair<std::string, int>("main", 1));
   std::cout << std::endl << "Control Flow:" << std::endl;
   definedFunctions["main"]->showControl();
+}
+
+void printFuncCat()
+{
+  std::cout << std::endl << std::endl << "Based on the control flow, we can assess the following:" << std::endl;
+  std::cout << "The functions which are called (that is need to be compiled and linked) are:" << std::endl;
+  for(auto it = definedFunctions.begin(); it != definedFunctions.end(); it++)
+  {
+    if(neededFunctions.contains(it->first))
+    {
+      std::cout << it->first << std::endl;
+    }
+  }
+
+  std::cout << std::endl << "The functions which are not called (that is do not need to be compiled and linked) are:" << std::endl;
+  for(auto it = definedFunctions.begin(); it != definedFunctions.end(); it++)
+  {
+    if(!neededFunctions.contains(it->first))
+    {
+      std::cout << it->first << std::endl;
+    }
+  }
 }

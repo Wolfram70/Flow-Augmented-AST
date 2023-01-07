@@ -9,6 +9,7 @@ extern bool genDefinition();
 extern bool genExtern();
 extern bool genTopLvlExpr();
 extern void printControlFlow();
+extern void printFuncCat();
 
 static void handleDefinition() {
   if (!genDefinition()) {
@@ -94,7 +95,8 @@ int main(int argc, char **argv) {
   mainLoop();
 
   printControlFlow();
-  // initialize();
+
+  printFuncCat();
 
   return 0;
 }

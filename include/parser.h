@@ -171,14 +171,18 @@ class BinaryExprAST : public ExprAST {
       : ExprAST(loc), op(op), LHS(LHS), RHS(RHS) { nodeName = "BinaryExprAST"; controlTo = 0; }
   void traverse() override {
     std::cout << "Binary Expression:" << std::endl;
-    LHS->traverse();
-    int lhs = justused;
     RHS->traverse();
     int rhs = justused;
+    LHS->traverse();
+    int lhs = justused;
     id++;
     std::cout << "%" << id << " = %" << lhs << " " << op << " %" << rhs
               << std::endl;
     justused = id;
+    for(auto jB : justBefore) {
+      controlEdgesFrom.push_back(jB);
+      jB->controlEdgesTo.push_back(this);
+    }
     justBefore.clear();
     justBefore.push_back(this);
   }
