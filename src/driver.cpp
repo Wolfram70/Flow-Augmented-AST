@@ -11,6 +11,7 @@ std::string fileName;
 extern bool genDefinition();
 extern bool genExtern();
 extern bool genTopLvlExpr();
+extern void printControlFlow();
 
 static void handleDefinition() {
   if (!genDefinition()) {
@@ -95,6 +96,7 @@ int main(int argc, char **argv) {
 
   mainLoop();
 
+  printControlFlow();
   // initialize();
 
   return 0;

@@ -21,13 +21,19 @@ class ForExprAST;
 class GenerateCode;
 
 extern int justused;
+extern std::vector<ExprAST*> justBefore;
 extern std::map<std::string, int> varIds;
 extern std::map<std::string, ExprAST*> definedFunctions;
 extern int id;
+extern std::map<std::string, int> neededFunctions;
 
 class ExprAST {
  public:
   SourceLocation loc;
+  std::vector<ExprAST*> controlEdgesTo;
+  std::vector<ExprAST*> controlEdgesFrom;
+  std::string nodeName;
+  int controlTo;
 
  public:
   ExprAST(SourceLocation loc = curLoc) : loc(loc) {}
@@ -35,6 +41,7 @@ class ExprAST {
   int getLine() const { return loc.line; }
   int getCol() const { return loc.col; }
   virtual void traverse() {}
+  virtual void showControl() {}
 };
 
 class NumberExprAST : public ExprAST {
@@ -42,11 +49,22 @@ class NumberExprAST : public ExprAST {
   double val;
 
  public:
-  NumberExprAST(double val) : val(val) {}
+  NumberExprAST(double val) : val(val) { nodeName = "NumberExprAST"; controlTo = 0; }
   void traverse() override {
+    for(auto jB : justBefore) {
+      controlEdgesFrom.push_back(jB);
+      jB->controlEdgesTo.push_back(this);
+    }
     id++;
     std::cout << "%" << id << " : (const number) " << val << std::endl;
     justused = id;
+    justBefore.clear();
+    justBefore.push_back(this);
+  }
+  void showControl() override
+  {
+    std::cout << nodeName << " (" << val << ") -> ";
+    if(controlTo < controlEdgesTo.size()) controlEdgesTo[controlTo++]->showControl();
   }
 };
 
@@ -56,14 +74,24 @@ class VariableExprAST : public ExprAST {
 
  public:
   VariableExprAST(SourceLocation loc, const std::string& name)
-      : ExprAST(loc), name(name) {}
+      : ExprAST(loc), name(name) { nodeName = "VariableExprAST"; controlTo = 0; }
   void traverse() override {
     int varId;
     if (varIds.contains(name)) {
+      for(auto jB : justBefore) {
+        controlEdgesFrom.push_back(jB);
+        jB->controlEdgesTo.push_back(this);
+      }
       varId = varIds[name];
       justused = varId;
+      justBefore.clear();
+      justBefore.push_back(this);
       //std::cout << "%" << varId << " : " << name << " (variable)" << std::endl;
       return;
+    }
+    for(auto jB : justBefore) {
+      controlEdgesFrom.push_back(jB);
+      jB->controlEdgesTo.push_back(this);
     }
     std::cout << "Error: Variable undeclared. Proceeding by inserting a dummy "
                  "declaration."
@@ -73,6 +101,13 @@ class VariableExprAST : public ExprAST {
     justused = varId;
     varIds.insert(std::pair<std::string, int>(name, varId));
     std::cout << "%" << varId << " : " << name << " (variable)" << std::endl;
+    justBefore.clear();
+    justBefore.push_back(this);
+  }
+  void showControl() override
+  {
+    std::cout << nodeName << " (" << name << ") -> ";
+    if(controlTo < controlEdgesTo.size()) controlEdgesTo[controlTo++]->showControl();
   }
 };
 
@@ -84,8 +119,12 @@ class VarExprAST : public ExprAST {
  public:
   VarExprAST(std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> vars,
              std::unique_ptr<ExprAST> body)
-      : vars(std::move(vars)), body(std::move(body)) {}
+      : vars(std::move(vars)), body(std::move(body)) { nodeName = "VarExprAST"; controlTo = 0; }
   void traverse() override {
+    for(auto jB : justBefore) {
+      controlEdgesFrom.push_back(jB);
+      jB->controlEdgesTo.push_back(this);
+    }
     std::cout << "Var Expression:" << std::endl;
     std::vector<std::pair<std::string, int>> oldVarIds;
     for (auto& var : vars) {
@@ -111,6 +150,13 @@ class VarExprAST : public ExprAST {
     for (auto& var : oldVarIds) {
       varIds.insert(std::pair<std::string, int>(var.first, var.second));
     }
+    justBefore.clear();
+    justBefore.push_back(this);
+  }
+  void showControl() override
+  {
+    std::cout << nodeName << " -> ";
+    if(controlTo < controlEdgesTo.size()) controlEdgesTo[controlTo++]->showControl();
   }
 };
 
@@ -122,8 +168,12 @@ class BinaryExprAST : public ExprAST {
  public:
   BinaryExprAST(SourceLocation loc, char op, std::unique_ptr<ExprAST> LHS,
                 std::unique_ptr<ExprAST> RHS)
-      : ExprAST(loc), op(op), LHS(std::move(LHS)), RHS(std::move(RHS)) {}
+      : ExprAST(loc), op(op), LHS(std::move(LHS)), RHS(std::move(RHS)) { nodeName = "BinaryExprAST"; controlTo = 0; }
   void traverse() override {
+    for(auto jB : justBefore) {
+      controlEdgesFrom.push_back(jB);
+      jB->controlEdgesTo.push_back(this);
+    }
     std::cout << "Binary Expression:" << std::endl;
     LHS->traverse();
     int lhs = justused;
@@ -133,6 +183,13 @@ class BinaryExprAST : public ExprAST {
     std::cout << "%" << id << " = %" << lhs << " " << op << " %" << rhs
               << std::endl;
     justused = id;
+    justBefore.clear();
+    justBefore.push_back(this);
+  }
+  void showControl() override
+  {
+    std::cout << nodeName << " (" << op << ") -> ";
+    if(controlTo < controlEdgesTo.size()) controlEdgesTo[controlTo++]->showControl();
   }
 };
 
@@ -143,14 +200,25 @@ class UnaryExprAST : public ExprAST {
 
  public:
   UnaryExprAST(char op, std::unique_ptr<ExprAST> operand)
-      : op(op), operand(std::move(operand)) {}
+      : op(op), operand(std::move(operand)) { nodeName = "UnaryExprAST"; controlTo = 0; }
   void traverse() override {
+    for(auto jB : justBefore) {
+      controlEdgesFrom.push_back(jB);
+      jB->controlEdgesTo.push_back(this);
+    }
     std::cout << "Unary Expression:" << std::endl;
     operand->traverse();
     int op = justused;
     id++;
     std::cout << "%" << id << " = " << op << std::endl;
     justused = id;
+    justBefore.clear();
+    justBefore.push_back(this);
+  }
+  void showControl() override
+  {
+    std::cout << nodeName << " (" << op << ") -> ";
+    if(controlTo < controlEdgesTo.size()) controlEdgesTo[controlTo++]->showControl();
   }
 };
 
@@ -162,12 +230,21 @@ class CallExprAST : public ExprAST {
  public:
   CallExprAST(SourceLocation loc, const std::string& callee,
               std::vector<std::unique_ptr<ExprAST>> args)
-      : ExprAST(loc), callee(callee), args(std::move(args)) {}
+      : ExprAST(loc), callee(callee), args(std::move(args)) { nodeName = "CallExprAST"; controlTo = 0; }
   void traverse() override {
+    for(auto jB : justBefore) {
+      controlEdgesFrom.push_back(jB);
+      jB->controlEdgesTo.push_back(this);
+    }
     std::cout << "Call Expression:" << std::endl;
     if(!definedFunctions.contains(callee))
     {
       std::cout << "Error: Function " << callee << " not defined. Proceeding assuming a definition exists." << std::endl;
+    }
+    else
+    {
+      controlEdgesTo.push_back(definedFunctions[callee]);
+      definedFunctions[callee]->controlEdgesFrom.push_back(this);
     }
     std::vector<int> argIds;
     for (auto& arg : args) {
@@ -186,6 +263,14 @@ class CallExprAST : public ExprAST {
     }
     std::cout << ")" << std::endl;
     justused = callId;
+    justBefore.clear();
+    justBefore.push_back(this);
+  }
+  void showControl() override
+  {
+    std::cout << nodeName << " (" << callee << ") -> ";
+    if(!neededFunctions.contains(callee)) neededFunctions.insert(std::pair<std::string, int>(callee, 0));
+    if(controlTo < controlEdgesTo.size()) controlEdgesTo[controlTo++]->showControl();
   }
 };
 
@@ -208,13 +293,17 @@ class PrototypeAST : public ExprAST {
         argString(std::move(argString)),
         isOperator(isOperator),
         precedence(precedence),
-        line(loc.line) {}
+        line(loc.line) { nodeName = "PrototypeAST"; controlTo = 0; }
   const std::string getName() const { return name; }
   bool isUnaryOp() { return (isOperator && (args.size() == 1)); }
   bool isBinaryOp() { return (isOperator && (args.size() == 2)); }
   char getOperatorName() { return name[name.size() - 1]; }
   int getLine() const { return line; }
   void traverse() override {
+    for(auto jB : justBefore) {
+      controlEdgesFrom.push_back(jB);
+      jB->controlEdgesTo.push_back(this);
+    }
     std::cout << "Prototype:" << std::endl;
     std::cout << "Function: " << name << std::endl;
     std::cout << "Arguments: ";
@@ -225,6 +314,13 @@ class PrototypeAST : public ExprAST {
       varIds.insert(std::pair<std::string, int>(arg, argId));
     }
     std::cout << std::endl;
+    justBefore.clear();
+    justBefore.push_back(this);
+  }
+  void showControl() override
+  {
+    std::cout << nodeName << " (" << name << ") -> ";
+    if(controlTo < controlEdgesTo.size()) controlEdgesTo[controlTo++]->showControl();
   }
 };
 
@@ -236,11 +332,18 @@ class FunctionAST : public ExprAST {
  public:
   FunctionAST(std::unique_ptr<PrototypeAST> proto,
               std::unique_ptr<ExprAST> body)
-      : proto(std::move(proto)), body(std::move(body)) {}
+      : proto(std::move(proto)), body(std::move(body)) { nodeName = "FunctionAST"; controlTo = 0; }
   void traverse() override {
     std::cout << "Function:" << std::endl;
+    justBefore.clear();
+    justBefore.push_back(this);
     proto->traverse();
     body->traverse();
+  }
+  void showControl() override
+  {
+    std::cout << nodeName << " (" << proto->name << ") -> ";
+    //if(controlTo < controlEdgesTo.size()) controlEdgesTo[controlTo++]->showControl();
   }
 };
 
@@ -254,7 +357,7 @@ class IfExprAST : public ExprAST {
       : ExprAST(loc),
         cond(std::move(cond)),
         then(std::move(then)),
-        _else(std::move(_else)) {}
+        _else(std::move(_else)) { nodeName = "IfExprAST"; controlTo = 0; }
   void traverse() override {
     std::cout << "If Expression:" << std::endl;
     cond->traverse();
@@ -262,12 +365,25 @@ class IfExprAST : public ExprAST {
     then->traverse();
     int thenId = justused;
     _else->traverse();
+    _else->controlEdgesFrom[controlEdgesFrom.size() - 1]->controlEdgesTo.pop_back();
+    _else->controlEdgesFrom.pop_back();
     int elseId = justused;
+    cond->controlEdgesTo.push_back(&(*_else));
+    _else->controlEdgesFrom.push_back(&(*cond));
     id++;
     int ifId = id;
     std::cout << "%" << ifId << " = if %" << condId << " then %" << thenId
               << " else %" << elseId << std::endl;
     justused = ifId;
+    justBefore.clear();
+    justBefore.push_back(&(*then));
+    justBefore.push_back(&(*_else));
+  }
+  void showControl() override
+  {
+    std::cout << nodeName;
+    std::cout << " (Condition taken to be true) -> " << std::endl;
+    if(controlTo < controlEdgesTo.size()) controlEdgesTo[controlTo++]->showControl();
   }
 };
 
@@ -284,22 +400,31 @@ class ForExprAST : public ExprAST {
         start(std::move(start)),
         cond(std::move(cond)),
         step(std::move(step)),
-        body(std::move(body)) {}
+        body(std::move(body)) { nodeName = "ForExprAST"; controlTo = 0; }
   void traverse() override {
     std::cout << "For Expression:" << std::endl;
     start->traverse();
     int startId = justused;
     cond->traverse();
     int condId = justused;
-    step->traverse();
-    int stepId = justused;
     body->traverse();
     int bodyId = justused;
+    step->traverse();
+    int stepId = justused;
+    step->controlEdgesTo.push_back(&(*cond));
+    cond->controlEdgesFrom.push_back(&(*step));
     id++;
     int forId = id;
     std::cout << "%" << forId << " = for " << varName << " = %" << startId
               << " to %" << condId << " step %" << stepId << " do %" << bodyId
               << std::endl;
     justused = forId;
+    justBefore.clear();
+    justBefore.push_back(&(*cond));
+  }
+  void showControl() override
+  {
+    std::cout << nodeName << " -> " << std::endl;
+    if(controlTo < controlEdgesTo.size()) controlEdgesTo[controlTo++]->showControl();
   }
 };

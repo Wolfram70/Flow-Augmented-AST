@@ -10,11 +10,12 @@ std::map<char, int> binOpPrecedence;
 
 std::map<std::string, std::unique_ptr<PrototypeAST>> functionProtos;
 int justused = 0;
+std::vector<ExprAST*> justBefore;
 int id = 0;
 
 std::map<std::string, int> varIds;
 std::map<std::string, ExprAST*> definedFunctions;
-
+std::map<std::string, int> neededFunctions;
 
 int tempResolveTopLvlExpr = 0;
 
@@ -475,7 +476,7 @@ bool genDefinition()
 {
   if(auto fn = parseDefinition())
   {
-    definedFunctions.insert(std::pair<std::string, ExprAST*>(fn->proto->name, &(*fn)));
+    definedFunctions.insert(std::pair<std::string, FunctionAST*>(fn->proto->name, &(*fn)));
     std::cout << "Traversal: " << std::endl;
     fn->traverse();
     varIds.clear();
@@ -492,5 +493,11 @@ bool genTopLvlExpr() { return false; }
 
 void printControlFlow()
 {
-
+  if(!definedFunctions.contains("main"))
+  {
+    std::cout << "No main function (entry point) defined" << std::endl;
+    return;
+  }
+  std::cout << std::endl << "Control Flow:" << std::endl;
+  std::cout << definedFunctions["main"]->nodeName;
 }
