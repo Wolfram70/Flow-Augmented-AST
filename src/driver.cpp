@@ -1,9 +1,6 @@
 #include "../include/parser.h"
 
 extern int getNextToken();
-extern std::unique_ptr<FunctionAST> parseDefinition();
-extern std::unique_ptr<PrototypeAST> parseExtern();
-extern std::unique_ptr<FunctionAST> parseTopLvlExpr();
 
 std::ifstream file;
 std::string fileName;

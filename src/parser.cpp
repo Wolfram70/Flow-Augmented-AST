@@ -8,7 +8,7 @@ char curTok;
 
 std::map<char, int> binOpPrecedence;
 
-std::map<std::string, std::unique_ptr<PrototypeAST>> functionProtos;
+std::map<std::string, PrototypeAST*> functionProtos;
 int justused = 0;
 std::vector<ExprAST*> justBefore;
 int id = 0;
@@ -19,43 +19,43 @@ std::map<std::string, int> neededFunctions;
 
 int tempResolveTopLvlExpr = 0;
 
-std::unique_ptr<ExprAST> parseNumberExpr();
-std::unique_ptr<ExprAST> parseParenExpr();
-std::unique_ptr<ExprAST> parsePrimary();
-std::unique_ptr<ExprAST> parseBinOpRHS(int exprPrec,
-                                       std::unique_ptr<ExprAST> LHS);
-std::unique_ptr<ExprAST> parseExpression();
-std::unique_ptr<ExprAST> parseIdentifierExpr();
-std::unique_ptr<PrototypeAST> parseProtoype();
-std::unique_ptr<FunctionAST> parseDefinition();
-std::unique_ptr<PrototypeAST> parseExtern();
-std::unique_ptr<ExprAST> parseUnaryExpr();
-std::unique_ptr<FunctionAST> parseTopLvlExpr();
-std::unique_ptr<ExprAST> parseIfExpr();
-std::unique_ptr<ExprAST> parseForExpr();
-std::unique_ptr<ExprAST> parseVarExpr();
+ExprAST* parseNumberExpr();
+ExprAST* parseParenExpr();
+ExprAST* parsePrimary();
+ExprAST* parseBinOpRHS(int exprPrec,
+                                       ExprAST* LHS);
+ExprAST* parseExpression();
+ExprAST* parseIdentifierExpr();
+PrototypeAST* parseProtoype();
+FunctionAST* parseDefinition();
+PrototypeAST* parseExtern();
+ExprAST* parseUnaryExpr();
+FunctionAST* parseTopLvlExpr();
+ExprAST* parseIfExpr();
+ExprAST* parseForExpr();
+ExprAST* parseVarExpr();
 
 int getNextToken() { return curTok = getToken(); }
 
-std::unique_ptr<ExprAST> logError(const char *str) {
+ExprAST* logError(const char *str) {
   fprintf(stderr, "LogError: %s\n", str);
   return nullptr;
 }
 
-std::unique_ptr<PrototypeAST> logErrorP(const char *str) {
+PrototypeAST* logErrorP(const char *str) {
   logError(str);
   return nullptr;
 }
 
-std::unique_ptr<ExprAST> parseNumberExpr() {
-  auto result = std::make_unique<NumberExprAST>(numVal);
+ExprAST* parseNumberExpr() {
+  auto result = new NumberExprAST(numVal);
   getNextToken();
-  return std::move(result);
+  return result;
 }
 
-std::unique_ptr<ExprAST> parseParenExpr() {
+ExprAST* parseParenExpr() {
   getNextToken();
-  auto V = std::move(parseExpression());
+  auto V = parseExpression();
   if (!V) {
     return nullptr;
   }
@@ -64,30 +64,30 @@ std::unique_ptr<ExprAST> parseParenExpr() {
     return logError("Expected ')'");
   } else {
     getNextToken();
-    return std::move(V);
+    return V;
   }
 }
 
-std::unique_ptr<ExprAST> parsePrimary() {
+ExprAST* parsePrimary() {
   switch (curTok) {
     case tok_identifier:
-      return std::move(parseIdentifierExpr());
+      return parseIdentifierExpr();
     case tok_number:
-      return std::move(parseNumberExpr());
+      return parseNumberExpr();
     case '(':
-      return std::move(parseParenExpr());
+      return parseParenExpr();
     case tok_if:
-      return std::move(parseIfExpr());
+      return parseIfExpr();
     case tok_for:
-      return std::move(parseForExpr());
+      return parseForExpr();
     case tok_var:
-      return std::move(parseVarExpr());
+      return parseVarExpr();
     default:
       return logError("Unknown token when expecting an expression");
   }
 }
 
-std::unique_ptr<ExprAST> parseUnaryExpr() {
+ExprAST* parseUnaryExpr() {
   if (!isascii(curTok) || curTok == '(') {
     return parsePrimary();
   }
@@ -96,12 +96,12 @@ std::unique_ptr<ExprAST> parseUnaryExpr() {
   getNextToken();
 
   if (auto operand = parseUnaryExpr()) {
-    return std::make_unique<UnaryExprAST>(opc, std::move(operand));
+    return new UnaryExprAST(opc, operand);
   }
   return nullptr;
 }
 
-std::unique_ptr<ExprAST> parseForExpr() {
+ExprAST* parseForExpr() {
   getNextToken();
 
   if (curTok != tok_identifier) {
@@ -134,7 +134,7 @@ std::unique_ptr<ExprAST> parseForExpr() {
     return nullptr;
   }
 
-  std::unique_ptr<ExprAST> step;
+  ExprAST* step;
   if (curTok == tok_inc) {
     getNextToken();
     step = parseExpression();
@@ -158,14 +158,14 @@ std::unique_ptr<ExprAST> parseForExpr() {
     return nullptr;
   }
 
-  return std::make_unique<ForExprAST>(idName, std::move(start), std::move(cond),
-                                      std::move(step), std::move(body));
+  return new ForExprAST(idName, start, cond,
+                        step, body);
 }
 
-std::unique_ptr<ExprAST> parseVarExpr() {
+ExprAST* parseVarExpr() {
   getNextToken();
 
-  std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> vars;
+  std::vector<std::pair<std::string, ExprAST*>> vars;
 
   if (curTok != tok_identifier) {
     return logError("Expected identifier after var");
@@ -175,17 +175,17 @@ std::unique_ptr<ExprAST> parseVarExpr() {
     std::string name = identifierStr;
     getNextToken();
 
-    std::unique_ptr<ExprAST> init;
+    ExprAST* init;
     if (curTok == '=') {
       getNextToken();
 
-      init = std::move(parseExpression());
+      init = parseExpression();
       if (!init) {
         return nullptr;
       }
     }
 
-    vars.push_back(std::make_pair(name, std::move(init)));
+    vars.push_back(std::make_pair(name, init));
 
     if (curTok != ',') {
       break;
@@ -208,7 +208,7 @@ std::unique_ptr<ExprAST> parseVarExpr() {
     return nullptr;
   }
 
-  return std::make_unique<VarExprAST>(std::move(vars), std::move(body));
+  return new VarExprAST(vars, body);
 }
 
 int getTokPrecedence() {
@@ -225,8 +225,8 @@ int getTokPrecedence() {
   return tokPrec;
 }
 
-std::unique_ptr<ExprAST> parseBinOpRHS(int exprPrec,
-                                       std::unique_ptr<ExprAST> LHS) {
+ExprAST* parseBinOpRHS(int exprPrec,
+                                       ExprAST* LHS) {
   while (true) {
     int tokPrec = getTokPrecedence();
 
@@ -256,37 +256,36 @@ std::unique_ptr<ExprAST> parseBinOpRHS(int exprPrec,
       }
     }
 
-    LHS = std::make_unique<BinaryExprAST>(binLoc, binOp, std::move(LHS),
-                                          std::move(RHS));
+    LHS = new BinaryExprAST(binLoc, binOp, LHS, RHS);
   }
 }
 
-std::unique_ptr<ExprAST> parseExpression() {
-  auto LHS = std::move(parseUnaryExpr());
+ExprAST* parseExpression() {
+  auto LHS = parseUnaryExpr();
 
   if (!LHS) {
     return nullptr;
   }
 
-  return std::move(parseBinOpRHS(0, std::move(LHS)));
+  return parseBinOpRHS(0, LHS);
 }
 
-std::unique_ptr<ExprAST> parseIdentifierExpr() {
+ExprAST* parseIdentifierExpr() {
   std::string idName = identifierStr;
   SourceLocation litLoc = curLoc;
 
   getNextToken();
   if (curTok != '(') {
-    return std::make_unique<VariableExprAST>(litLoc, idName);
+    return new VariableExprAST(litLoc, idName);
   }
   getNextToken();
 
-  std::vector<std::unique_ptr<ExprAST>> args;
+  std::vector<ExprAST*> args;
 
   if (curTok != ')') {
     while (true) {
       if (auto arg = parseExpression()) {
-        args.push_back(std::move(arg));
+        args.push_back(arg);
       } else {
         return nullptr;
       }
@@ -305,10 +304,10 @@ std::unique_ptr<ExprAST> parseIdentifierExpr() {
 
   getNextToken();
 
-  return std::make_unique<CallExprAST>(litLoc, idName, std::move(args));
+  return new CallExprAST(litLoc, idName, args);
 }
 
-std::unique_ptr<ExprAST> parseIfExpr() {
+ExprAST* parseIfExpr() {
   SourceLocation ifLoc = curLoc;
 
   getNextToken();
@@ -350,11 +349,10 @@ std::unique_ptr<ExprAST> parseIfExpr() {
     return nullptr;
   }
 
-  return std::make_unique<IfExprAST>(ifLoc, std::move(cond), std::move(then),
-                                     std::move(_else));
+  return new IfExprAST(ifLoc, cond, then, _else);
 }
 
-std::unique_ptr<PrototypeAST> parseProtoype() {
+PrototypeAST* parseProtoype() {
   std::string fnName;
 
   SourceLocation fnLoc = curLoc;
@@ -404,14 +402,13 @@ std::unique_ptr<PrototypeAST> parseProtoype() {
     return logErrorP("Expected '(' in function prototype");
   }
 
-  std::vector<std::unique_ptr<ExprAST>> argNames;
+  std::vector<ExprAST*> argNames;
   std::vector<std::string> argString;
 
   int tok = getNextToken();
 
   while (tok == tok_identifier) {
-    argNames.push_back(
-        std::move(std::make_unique<VariableExprAST>(fnLoc, identifierStr)));
+    argNames.push_back(new VariableExprAST(fnLoc, identifierStr));
     argString.push_back(identifierStr);
 
     tok = getNextToken();
@@ -433,40 +430,38 @@ std::unique_ptr<PrototypeAST> parseProtoype() {
     return logErrorP("Invalid number of operands for an operator");
   }
 
-  return std::make_unique<PrototypeAST>(fnLoc, fnName, std::move(argNames),
-                                        std::move(argString), kind != 0,
-                                        binaryPrecedence);
+  return new PrototypeAST(fnLoc, fnName, argNames, argString, kind != 0, binaryPrecedence);
 }
 
-std::unique_ptr<FunctionAST> parseDefinition() {
+FunctionAST* parseDefinition() {
   getNextToken();
 
-  auto proto = std::move(parseProtoype());
+  auto proto = parseProtoype();
   if (!proto) {
     return nullptr;
   }
 
-  if (auto exp = std::move(parseExpression())) {
-    return std::make_unique<FunctionAST>(std::move(proto), std::move(exp));
+  if (auto exp = parseExpression()) {
+    return new FunctionAST(proto, exp);
   }
 
   return nullptr;
 }
 
-std::unique_ptr<PrototypeAST> parseExtern() {
+PrototypeAST* parseExtern() {
   getNextToken();
 
-  return std::move(parseProtoype());
+  return parseProtoype();
 }
 
-std::unique_ptr<FunctionAST> parseTopLvlExpr() {
+FunctionAST* parseTopLvlExpr() {
   SourceLocation exprLoc = curLoc;
 
-  if (auto exp = std::move(parseExpression())) {
-    auto proto = std::make_unique<PrototypeAST>(
-        exprLoc, "main", std::move(std::vector<std::unique_ptr<ExprAST>>()),
-        std::move(std::vector<std::string>()));
-    return std::make_unique<FunctionAST>(std::move(proto), std::move(exp));
+  if (auto exp = parseExpression()) {
+    auto proto = new PrototypeAST(
+        exprLoc, "main", std::vector<ExprAST*>(),
+        std::vector<std::string>());
+    return new FunctionAST(proto, exp);
   }
 
   return nullptr;
@@ -476,7 +471,7 @@ bool genDefinition()
 {
   if(auto fn = parseDefinition())
   {
-    definedFunctions.insert(std::pair<std::string, FunctionAST*>(fn->proto->name, &(*fn)));
+    definedFunctions.insert(std::pair<std::string, FunctionAST*>(fn->proto->name, fn));
     std::cout << "Traversal: " << std::endl;
     fn->traverse();
     varIds.clear();
@@ -499,5 +494,5 @@ void printControlFlow()
     return;
   }
   std::cout << std::endl << "Control Flow:" << std::endl;
-  std::cout << definedFunctions["main"]->nodeName;
+  definedFunctions["main"]->showControl();
 }

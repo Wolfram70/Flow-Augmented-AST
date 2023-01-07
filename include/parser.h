@@ -113,13 +113,13 @@ class VariableExprAST : public ExprAST {
 
 class VarExprAST : public ExprAST {
  public:
-  std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> vars;
-  std::unique_ptr<ExprAST> body;
+  std::vector<std::pair<std::string, ExprAST*>> vars;
+  ExprAST* body;
 
  public:
-  VarExprAST(std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> vars,
-             std::unique_ptr<ExprAST> body)
-      : vars(std::move(vars)), body(std::move(body)) { nodeName = "VarExprAST"; controlTo = 0; }
+  VarExprAST(std::vector<std::pair<std::string, ExprAST*>> vars,
+             ExprAST* body)
+      : vars(std::move(vars)), body(body) { nodeName = "VarExprAST"; controlTo = 0; }
   void traverse() override {
     for(auto jB : justBefore) {
       controlEdgesFrom.push_back(jB);
@@ -163,12 +163,12 @@ class VarExprAST : public ExprAST {
 class BinaryExprAST : public ExprAST {
  public:
   char op;
-  std::unique_ptr<ExprAST> LHS, RHS;
+  ExprAST *LHS, *RHS;
 
  public:
-  BinaryExprAST(SourceLocation loc, char op, std::unique_ptr<ExprAST> LHS,
-                std::unique_ptr<ExprAST> RHS)
-      : ExprAST(loc), op(op), LHS(std::move(LHS)), RHS(std::move(RHS)) { nodeName = "BinaryExprAST"; controlTo = 0; }
+  BinaryExprAST(SourceLocation loc, char op, ExprAST* LHS,
+                ExprAST* RHS)
+      : ExprAST(loc), op(op), LHS(LHS), RHS(RHS) { nodeName = "BinaryExprAST"; controlTo = 0; }
   void traverse() override {
     for(auto jB : justBefore) {
       controlEdgesFrom.push_back(jB);
@@ -196,11 +196,11 @@ class BinaryExprAST : public ExprAST {
 class UnaryExprAST : public ExprAST {
  public:
   char op;
-  std::unique_ptr<ExprAST> operand;
+  ExprAST* operand;
 
  public:
-  UnaryExprAST(char op, std::unique_ptr<ExprAST> operand)
-      : op(op), operand(std::move(operand)) { nodeName = "UnaryExprAST"; controlTo = 0; }
+  UnaryExprAST(char op, ExprAST* operand)
+      : op(op), operand(operand) { nodeName = "UnaryExprAST"; controlTo = 0; }
   void traverse() override {
     for(auto jB : justBefore) {
       controlEdgesFrom.push_back(jB);
@@ -225,11 +225,11 @@ class UnaryExprAST : public ExprAST {
 class CallExprAST : public ExprAST {
  public:
   std::string callee;
-  std::vector<std::unique_ptr<ExprAST>> args;
+  std::vector<ExprAST*> args;
 
  public:
   CallExprAST(SourceLocation loc, const std::string& callee,
-              std::vector<std::unique_ptr<ExprAST>> args)
+              std::vector<ExprAST*> args)
       : ExprAST(loc), callee(callee), args(std::move(args)) { nodeName = "CallExprAST"; controlTo = 0; }
   void traverse() override {
     for(auto jB : justBefore) {
@@ -277,7 +277,7 @@ class CallExprAST : public ExprAST {
 class PrototypeAST : public ExprAST {
  public:
   std::string name;
-  std::vector<std::unique_ptr<ExprAST>> args;
+  std::vector<ExprAST*> args;
   std::vector<std::string> argString;
   bool isOperator;
   unsigned precedence;
@@ -285,7 +285,7 @@ class PrototypeAST : public ExprAST {
 
  public:
   PrototypeAST(SourceLocation loc, const std::string& name,
-               std::vector<std::unique_ptr<ExprAST>> args,
+               std::vector<ExprAST*> args,
                std::vector<std::string> argString, bool isOperator = false,
                unsigned precedence = 0)
       : name(name),
@@ -326,13 +326,13 @@ class PrototypeAST : public ExprAST {
 
 class FunctionAST : public ExprAST {
  public:
-  std::unique_ptr<PrototypeAST> proto;
-  std::unique_ptr<ExprAST> body;
+  PrototypeAST* proto;
+  ExprAST* body;
 
  public:
-  FunctionAST(std::unique_ptr<PrototypeAST> proto,
-              std::unique_ptr<ExprAST> body)
-      : proto(std::move(proto)), body(std::move(body)) { nodeName = "FunctionAST"; controlTo = 0; }
+  FunctionAST(PrototypeAST* proto,
+              ExprAST* body)
+      : proto(proto), body(body) { nodeName = "FunctionAST"; controlTo = 0; }
   void traverse() override {
     std::cout << "Function:" << std::endl;
     justBefore.clear();
@@ -343,21 +343,21 @@ class FunctionAST : public ExprAST {
   void showControl() override
   {
     std::cout << nodeName << " (" << proto->name << ") -> ";
-    //if(controlTo < controlEdgesTo.size()) controlEdgesTo[controlTo++]->showControl();
+    if(controlTo < controlEdgesTo.size()) controlEdgesTo[controlTo++]->showControl();
   }
 };
 
 class IfExprAST : public ExprAST {
  public:
-  std::unique_ptr<ExprAST> cond, then, _else;
+  ExprAST *cond, *then, *_else;
 
  public:
-  IfExprAST(SourceLocation loc, std::unique_ptr<ExprAST> cond,
-            std::unique_ptr<ExprAST> then, std::unique_ptr<ExprAST> _else)
+  IfExprAST(SourceLocation loc, ExprAST* cond,
+            ExprAST* then, ExprAST* _else)
       : ExprAST(loc),
-        cond(std::move(cond)),
-        then(std::move(then)),
-        _else(std::move(_else)) { nodeName = "IfExprAST"; controlTo = 0; }
+        cond(cond),
+        then(then),
+        _else(_else) { nodeName = "IfExprAST"; controlTo = 0; }
   void traverse() override {
     std::cout << "If Expression:" << std::endl;
     cond->traverse();
@@ -390,17 +390,17 @@ class IfExprAST : public ExprAST {
 class ForExprAST : public ExprAST {
  public:
   std::string varName;
-  std::unique_ptr<ExprAST> start, cond, step, body;
+  ExprAST *start, *cond, *step, *body;
 
  public:
-  ForExprAST(const std::string& varName, std::unique_ptr<ExprAST> start,
-             std::unique_ptr<ExprAST> cond, std::unique_ptr<ExprAST> step,
-             std::unique_ptr<ExprAST> body)
+  ForExprAST(const std::string& varName, ExprAST* start,
+             ExprAST* cond, ExprAST* step,
+             ExprAST* body)
       : varName(varName),
-        start(std::move(start)),
-        cond(std::move(cond)),
-        step(std::move(step)),
-        body(std::move(body)) { nodeName = "ForExprAST"; controlTo = 0; }
+        start(start),
+        cond(cond),
+        step(step),
+        body(body) { nodeName = "ForExprAST"; controlTo = 0; }
   void traverse() override {
     std::cout << "For Expression:" << std::endl;
     start->traverse();
