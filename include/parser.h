@@ -245,6 +245,8 @@ class CallExprAST : public ExprAST {
     {
       controlEdgesTo.push_back(definedFunctions[callee]);
       definedFunctions[callee]->controlEdgesFrom.push_back(this);
+      definedFunctions[callee]->controlEdgesTo.push_back(this);
+      controlEdgesFrom.push_back(definedFunctions[callee]);
     }
     std::vector<int> argIds;
     for (auto& arg : args) {
@@ -339,6 +341,12 @@ class FunctionAST : public ExprAST {
     justBefore.push_back(this);
     proto->traverse();
     body->traverse();
+    for(auto jB : justBefore) {
+      controlEdgesFrom.push_back(jB);
+      jB->controlEdgesTo.push_back(this);
+    }
+    justBefore.clear();
+    justBefore.push_back(this);
   }
   void showControl() override
   {
