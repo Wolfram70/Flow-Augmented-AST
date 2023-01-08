@@ -25,6 +25,7 @@ extern std::map<std::string, int> varIds;
 extern std::map<std::string, ExprAST*> definedFunctions;
 extern int id;
 extern std::map<std::string, int> neededFunctions;
+extern std::multimap<ExprAST*, std::string> alreadyReturnedIfcont;
 
 class ExprAST {
  public:
@@ -35,18 +36,41 @@ class ExprAST {
   int controlTo;
   ExprAST* lastNode = this;
   ExprAST* startNode = this;
+  bool isIfcont = false;
+  bool isFuncEnd = false;
+  std::pair<std::string, FunctionAST*> funcDetails;
 
  public:
   ExprAST(SourceLocation loc = curLoc) : loc(loc) {}
   virtual ~ExprAST() = default;
-  int getLine() const { return loc.line; }
-  int getCol() const { return loc.col; }
+  virtual int getLine() const { return loc.line; }
+  virtual int getCol() const { return loc.col; }
   virtual void traverse() {}
-  virtual void showControl()
-  {
+  virtual void showControl() {
     std::cout << nodeName << " -> ";
-    if(controlEdgesTo.size() > 0) controlTo = controlTo % controlEdgesTo.size();
-    if(controlTo < controlEdgesTo.size()) controlEdgesTo[controlTo++]->showControl();
+    if (controlEdgesTo.size() > 0)
+      controlTo = controlTo % controlEdgesTo.size();
+
+    bool foundReturn = false;
+
+    if(isFuncEnd && (controlEdgesTo.size() > 0)) {
+      if(controlEdgesTo[controlTo]->isIfcont) {
+        for(auto p : alreadyReturnedIfcont) {
+          if((p.second == funcDetails.first) && (p.first == controlEdgesTo[controlTo])) {
+            controlTo++;
+            foundReturn = true;
+            break;
+          } //if end
+        } //for end
+        if(!foundReturn) {
+          alreadyReturnedIfcont.insert(std::pair<ExprAST*, std::string>(controlEdgesTo[controlTo], funcDetails.first));
+        }
+      }
+    } //if end
+
+
+    if (controlTo < controlEdgesTo.size())
+      controlEdgesTo[controlTo++]->showControl();
   }
 };
 
@@ -75,11 +99,27 @@ class NumberExprAST : public ExprAST {
   void showControl() override {
     std::cout << nodeName << " (" << val << ") -> ";
     if (controlEdgesTo.size() > 0)
-      if (controlEdgesTo.size() > 0)
-        controlTo = controlTo % controlEdgesTo.size();
+      controlTo = controlTo % controlEdgesTo.size();
+    
+    bool foundReturn = false;
+
+    if(isFuncEnd && (controlEdgesTo.size() > 0)) {
+      if(controlEdgesTo[controlTo]->isIfcont) {
+        for(auto p : alreadyReturnedIfcont) {
+          if((p.second == funcDetails.first) && (p.first == controlEdgesTo[controlTo])) {
+            controlTo++;
+            foundReturn = true;
+            break;
+          } //if end
+        } //for end
+        if(!foundReturn) {
+          alreadyReturnedIfcont.insert(std::pair<ExprAST*, std::string>(controlEdgesTo[controlTo], funcDetails.first));
+        }
+      }
+    } //if end
     if (controlTo < controlEdgesTo.size())
       controlEdgesTo[controlTo++]->showControl();
-  }
+  } //showControl end
 };
 
 class VariableExprAST : public ExprAST {
@@ -129,8 +169,26 @@ class VariableExprAST : public ExprAST {
   void showControl() override {
     std::cout << nodeName << " (" << name << ") -> ";
     if (controlEdgesTo.size() > 0)
-      if (controlEdgesTo.size() > 0)
-        controlTo = controlTo % controlEdgesTo.size();
+      controlTo = controlTo % controlEdgesTo.size();
+
+    bool foundReturn = false;
+
+    if(isFuncEnd && (controlEdgesTo.size() > 0)) {
+      if(controlEdgesTo[controlTo]->isIfcont) {
+        for(auto p : alreadyReturnedIfcont) {
+          if((p.second == funcDetails.first) && (p.first == controlEdgesTo[controlTo])) {
+            controlTo++;
+            foundReturn = true;
+            break;
+          } //if end
+        } //for end
+        if(!foundReturn) {
+          alreadyReturnedIfcont.insert(std::pair<ExprAST*, std::string>(controlEdgesTo[controlTo], funcDetails.first));
+        }
+      }
+    } //if end
+
+
     if (controlTo < controlEdgesTo.size())
       controlEdgesTo[controlTo++]->showControl();
   }
@@ -186,6 +244,25 @@ class VarExprAST : public ExprAST {
     std::cout << nodeName << " -> ";
     if (controlEdgesTo.size() > 0)
       controlTo = controlTo % controlEdgesTo.size();
+
+    bool foundReturn = false;
+
+    if(isFuncEnd && (controlEdgesTo.size() > 0)) {
+      if(controlEdgesTo[controlTo]->isIfcont) {
+        for(auto p : alreadyReturnedIfcont) {
+          if((p.second == funcDetails.first) && (p.first == controlEdgesTo[controlTo])) {
+            controlTo++;
+            foundReturn = true;
+            break;
+          } //if end
+        } //for end
+        if(!foundReturn) {
+          alreadyReturnedIfcont.insert(std::pair<ExprAST*, std::string>(controlEdgesTo[controlTo], funcDetails.first));
+        }
+      }
+    } //if end
+
+    
     if (controlTo < controlEdgesTo.size())
       controlEdgesTo[controlTo++]->showControl();
   }
@@ -219,7 +296,7 @@ class BinaryExprAST : public ExprAST {
       }
       justBefore.clear();
       justBefore.push_back(this);
-      startNode= LHS->startNode;
+      startNode = LHS->startNode;
       lastNode = this;
       return;
     }
@@ -237,13 +314,32 @@ class BinaryExprAST : public ExprAST {
     }
     justBefore.clear();
     justBefore.push_back(this);
-    startNode= LHS->startNode;
+    startNode = LHS->startNode;
     lastNode = this;
   }
   void showControl() override {
     std::cout << nodeName << " (" << op << ") -> ";
     if (controlEdgesTo.size() > 0)
       controlTo = controlTo % controlEdgesTo.size();
+
+    bool foundReturn = false;
+
+    if(isFuncEnd && (controlEdgesTo.size() > 0)) {
+      if(controlEdgesTo[controlTo]->isIfcont) {
+        for(auto p : alreadyReturnedIfcont) {
+          if((p.second == funcDetails.first) && (p.first == controlEdgesTo[controlTo])) {
+            controlTo++;
+            foundReturn = true;
+            break;
+          } //if end
+        } //for end
+        if(!foundReturn) {
+          alreadyReturnedIfcont.insert(std::pair<ExprAST*, std::string>(controlEdgesTo[controlTo], funcDetails.first));
+        }
+      }
+    } //if end
+
+
     if (controlTo < controlEdgesTo.size())
       controlEdgesTo[controlTo++]->showControl();
   }
@@ -262,8 +358,7 @@ class UnaryExprAST : public ExprAST {
   void traverse() override {
     std::cout << "Unary Expression:" << std::endl;
     operand->traverse();
-    for(auto jB : justBefore)
-    {
+    for (auto jB : justBefore) {
       controlEdgesFrom.push_back(jB);
       jB->controlEdgesTo.push_back(this);
     }
@@ -280,67 +375,25 @@ class UnaryExprAST : public ExprAST {
     std::cout << nodeName << " (" << op << ") -> ";
     if (controlEdgesTo.size() > 0)
       controlTo = controlTo % controlEdgesTo.size();
-    if (controlTo < controlEdgesTo.size())
-      controlEdgesTo[controlTo++]->showControl();
-  }
-};
 
-class CallExprAST : public ExprAST {
- public:
-  std::string callee;
-  std::vector<ExprAST*> args;
+    bool foundReturn = false;
 
- public:
-  CallExprAST(SourceLocation loc, const std::string& callee,
-              std::vector<ExprAST*> args)
-      : ExprAST(loc), callee(callee), args(std::move(args)) {
-    nodeName = "CallExprAST";
-    controlTo = 0;
-  }
-  void traverse() override {
-    std::cout << "Call Expression:" << std::endl;
-    std::vector<int> argIds;
-    lastNode = this;
-     for (auto& arg : args) {
-       arg->traverse();
-       argIds.push_back(justused);
-     }
-     if(args.size() > 0) startNode = args[0]->startNode;
-     else startNode = this;
-     for (auto jB : justBefore) {
-       controlEdgesFrom.push_back(jB);
-       jB->controlEdgesTo.push_back(this);
-     }
-     justBefore.clear();
-     justBefore.push_back(lastNode);
-    if (!definedFunctions.contains(callee)) {
-      std::cout << "Error: Function " << callee
-                << " not defined. Proceeding assuming a definition exists."
-                << std::endl;
-    } else {
-      controlEdgesTo.push_back(definedFunctions[callee]);
-      definedFunctions[callee]->controlEdgesFrom.push_back(this);
-      definedFunctions[callee]->lastNode->controlEdgesTo.push_back(this);
-      controlEdgesFrom.push_back(definedFunctions[callee]->lastNode);
-    }
-    id++;
-    int callId = id;
-    std::cout << "%" << callId << " = call " << callee << "(";
-    if (argIds.size() > 0) {
-      std::cout << "%" << argIds[0];
-    }
-    for (int i = 1; i < argIds.size(); i++) {
-      std::cout << ", %" << argIds[i];
-    }
-    std::cout << ")" << std::endl;
-    justused = callId;
-  }
-  void showControl() override {
-    std::cout << nodeName << " (" << callee << ") -> ";
-    if (!neededFunctions.contains(callee))
-      neededFunctions.insert(std::pair<std::string, int>(callee, 0));
-    if (controlEdgesTo.size() > 0)
-      controlTo = controlTo % controlEdgesTo.size();
+    if(isFuncEnd && (controlEdgesTo.size() > 0)) {
+      if(controlEdgesTo[controlTo]->isIfcont) {
+        for(auto p : alreadyReturnedIfcont) {
+          if((p.second == funcDetails.first) && (p.first == controlEdgesTo[controlTo])) {
+            controlTo++;
+            foundReturn = true;
+            break;
+          } //if end
+        } //for end
+        if(!foundReturn) {
+          alreadyReturnedIfcont.insert(std::pair<ExprAST*, std::string>(controlEdgesTo[controlTo], funcDetails.first));
+        }
+      }
+    } //if end
+
+
     if (controlTo < controlEdgesTo.size())
       controlEdgesTo[controlTo++]->showControl();
   }
@@ -372,7 +425,7 @@ class PrototypeAST : public ExprAST {
   bool isUnaryOp() { return (isOperator && (args.size() == 1)); }
   bool isBinaryOp() { return (isOperator && (args.size() == 2)); }
   char getOperatorName() { return name[name.size() - 1]; }
-  int getLine() const { return line; }
+  int getLine() const override { return line; }
   void traverse() override {
     for (auto jB : justBefore) {
       controlEdgesFrom.push_back(jB);
@@ -419,11 +472,80 @@ class FunctionAST : public ExprAST {
     startNode = this;
     proto->traverse();
     body->traverse();
+    body->lastNode->isFuncEnd = true;
+    body->lastNode->funcDetails =
+        std::pair<std::string, FunctionAST*>(proto->name, this);
     lastNode = body->lastNode;
     justBefore.clear();
   }
   void showControl() override {
     std::cout << nodeName << " (" << proto->name << ") -> ";
+    if (controlEdgesTo.size() > 0)
+      controlTo = controlTo % controlEdgesTo.size();
+    if(controlTo < controlEdgesTo.size())
+      controlEdgesTo[controlTo++]->showControl();
+  }
+};
+
+class CallExprAST : public ExprAST {
+ public:
+  std::string callee;
+  std::vector<ExprAST*> args;
+
+ public:
+  CallExprAST(SourceLocation loc, const std::string& callee,
+              std::vector<ExprAST*> args)
+      : ExprAST(loc), callee(callee), args(std::move(args)) {
+    nodeName = "CallExprAST";
+    controlTo = 0;
+  }
+  void traverse() override {
+    std::cout << "Call Expression:" << std::endl;
+    std::vector<int> argIds;
+    lastNode = this;
+    for (auto& arg : args) {
+      arg->traverse();
+      argIds.push_back(justused);
+    }
+    if (args.size() > 0)
+      startNode = args[0]->startNode;
+    else
+      startNode = this;
+    for (auto jB : justBefore) {
+      controlEdgesFrom.push_back(jB);
+      jB->controlEdgesTo.push_back(this);
+    }
+    if (!definedFunctions.contains(callee)) {
+      std::cout << "Error: Function " << callee
+                << " not defined. Proceeding assuming a definition exists."
+                << std::endl;
+    } else {
+      ExprAST* expression = definedFunctions[callee];
+      FunctionAST* func = dynamic_cast<FunctionAST*>(expression);
+      controlEdgesTo.push_back(func->body->startNode);
+      func->body->startNode->controlEdgesFrom.push_back(this);
+      lastNode = func->body->lastNode;
+      // definedFunctions[callee]->lastNode->controlEdgesTo.push_back(this);
+      // controlEdgesFrom.push_back(definedFunctions[callee]->lastNode);
+    }
+    id++;
+    int callId = id;
+    std::cout << "%" << callId << " = call " << callee << "(";
+    if (argIds.size() > 0) {
+      std::cout << "%" << argIds[0];
+    }
+    for (int i = 1; i < argIds.size(); i++) {
+      std::cout << ", %" << argIds[i];
+    }
+    std::cout << ")" << std::endl;
+    justused = callId;
+    justBefore.clear();
+    justBefore.push_back(lastNode);
+  }
+  void showControl() override {
+    std::cout << nodeName << " (" << callee << ") -> ";
+    if (!neededFunctions.contains(callee))
+      neededFunctions.insert(std::pair<std::string, int>(callee, 0));
     if (controlEdgesTo.size() > 0)
       controlTo = controlTo % controlEdgesTo.size();
     if (controlTo < controlEdgesTo.size())
@@ -443,10 +565,11 @@ class IfExprAST : public ExprAST {
     ifcont = new ExprAST(loc);
     ifcont->nodeName = "IfCont";
     ifcont->controlTo = 0;
+    ifcont->isIfcont = true;
   }
   void traverse() override {
     std::cout << "If Expression:" << std::endl;
-    for(auto jB : justBefore) {
+    for (auto jB : justBefore) {
       controlEdgesFrom.push_back(jB);
       jB->controlEdgesTo.push_back(this);
     }
@@ -461,23 +584,24 @@ class IfExprAST : public ExprAST {
     /*_else->controlEdgesFrom[_else->controlEdgesFrom.size() - 1]
         ->controlEdgesTo.pop_back();
     _else->controlEdgesFrom.pop_back();*/
-
-    //I WAS HERE (RESOLVING THIS IF THUNG)  (MIGHT NEED START NODE AS WELL)
     int elseId = justused;
-    for(int i = then->lastNode->controlEdgesTo.size() - 1; i > -1; i--) {
-      if(then->lastNode->controlEdgesTo[i] == _else->startNode) {
-        then->lastNode->controlEdgesTo.erase(then->lastNode->controlEdgesTo.begin() + i);
-        for(int j =  _else->startNode->controlEdgesFrom.size() - 1; j > -1; j--) {
-          if(_else->startNode->controlEdgesFrom[j] == then->lastNode) {
-            _else->startNode->controlEdgesFrom.erase(_else->startNode->controlEdgesFrom.begin() + j);
+    for (int i = then->lastNode->controlEdgesTo.size() - 1; i > -1; i--) {
+      if (then->lastNode->controlEdgesTo[i] == _else->startNode) {
+        then->lastNode->controlEdgesTo.erase(
+            then->lastNode->controlEdgesTo.begin() + i);
+        for (int j = _else->startNode->controlEdgesFrom.size() - 1; j > -1;
+             j--) {
+          if (_else->startNode->controlEdgesFrom[j] == then->lastNode) {
+            _else->startNode->controlEdgesFrom.erase(
+                _else->startNode->controlEdgesFrom.begin() + j);
             break;
           }
         }
         break;
       }
     }
-    cond->controlEdgesTo.push_back(_else->startNode);
-    _else->startNode->controlEdgesFrom.push_back(cond);
+    cond->lastNode->controlEdgesTo.push_back(_else->startNode);
+    _else->startNode->controlEdgesFrom.push_back(cond->lastNode);
     then->lastNode->controlEdgesTo.push_back(ifcont);
     ifcont->controlEdgesFrom.push_back(then->lastNode);
     _else->lastNode->controlEdgesTo.push_back(ifcont);
@@ -488,19 +612,20 @@ class IfExprAST : public ExprAST {
               << " else %" << elseId << std::endl;
     justused = ifId;
     justBefore.clear();
-    //For lastnode, might need a node where then and else meet after control end
+    // For lastnode, might need a node where then and else meet after control
+    // end
     lastNode = ifcont;
     justBefore.push_back(ifcont);
   }
   void showControl() override {
     std::cout << nodeName << std::endl;
-    std::cout << "Condition (line: " << cond->loc.line << ") True:\n-> ";
+    std::cout << "\nCondition (line: " << cond->loc.line << ") True:\n-> ";
     if (controlEdgesTo.size() > 0)
       controlTo = controlTo % controlEdgesTo.size();
     if (controlTo < controlEdgesTo.size())
       controlEdgesTo[controlTo++]->showControl();
     std::cout << " (program exit)";
-    std::cout << "\nCondition (line: " << cond->loc.line << ") False:\n-> ";
+    std::cout << "\n\nCondition (line: " << cond->loc.line << ") False:\n-> ";
     if (controlEdgesTo.size() > 0)
       controlTo = controlTo % controlEdgesTo.size();
     if (controlTo < controlEdgesTo.size())

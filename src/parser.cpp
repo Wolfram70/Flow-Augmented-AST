@@ -16,6 +16,7 @@ int id = 0;
 std::map<std::string, int> varIds;
 std::map<std::string, ExprAST*> definedFunctions;
 std::map<std::string, int> neededFunctions;
+std::multimap<ExprAST*, std::string> alreadyReturnedIfcont;
 
 int tempResolveTopLvlExpr = 0;
 
