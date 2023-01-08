@@ -469,7 +469,7 @@ bool genDefinition() {
   if (auto fn = parseDefinition()) {
     definedFunctions.insert(
         std::pair<std::string, FunctionAST*>(fn->proto->name, fn));
-    std::cout << "\nFUNCTION AST TRAVERSAL: " << std::endl;
+    std::cout << "\nFUNCTION AST TRAVERSAL (Generated IR): " << std::endl;
     fn->traverse();
     varIds.clear();
     return true;
