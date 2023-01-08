@@ -20,6 +20,7 @@ extern int advance() {
   } else {
     lexLoc.col++;
   }
+  curLoc = lexLoc;
   return lastChar;
 }
 

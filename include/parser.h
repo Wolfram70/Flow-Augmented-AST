@@ -41,7 +41,9 @@ class ExprAST {
   std::pair<std::string, FunctionAST*> funcDetails;
 
  public:
-  ExprAST(SourceLocation loc = curLoc) : loc(loc) {}
+  ExprAST(SourceLocation loc = curLoc) : loc(loc) {
+    loc = curLoc;
+  }
   virtual ~ExprAST() = default;
   virtual int getLine() const { return loc.line; }
   virtual int getCol() const { return loc.col; }
@@ -82,6 +84,7 @@ class NumberExprAST : public ExprAST {
   NumberExprAST(double val) : val(val) {
     nodeName = "NumberExprAST";
     controlTo = 0;
+    loc.line = curLoc.line;
   }
   void traverse() override {
     for (auto jB : justBefore) {
@@ -131,6 +134,7 @@ class VariableExprAST : public ExprAST {
       : ExprAST(loc), name(name) {
     nodeName = "VariableExprAST";
     controlTo = 0;
+    loc.line = curLoc.line;
   }
   void traverse() override {
     int varId;
@@ -204,6 +208,7 @@ class VarExprAST : public ExprAST {
       : vars(std::move(vars)), body(body) {
     nodeName = "VarExprAST";
     controlTo = 0;
+    loc.line = curLoc.line;
   }
   void traverse() override {
     for (auto jB : justBefore) {
@@ -278,6 +283,7 @@ class BinaryExprAST : public ExprAST {
       : ExprAST(loc), op(op), LHS(LHS), RHS(RHS) {
     nodeName = "BinaryExprAST";
     controlTo = 0;
+    loc.line = curLoc.line;
   }
   void traverse() override {
     std::cout << "Binary Expression:" << std::endl;
@@ -354,6 +360,7 @@ class UnaryExprAST : public ExprAST {
   UnaryExprAST(char op, ExprAST* operand) : op(op), operand(operand) {
     nodeName = "UnaryExprAST";
     controlTo = 0;
+    loc.line = curLoc.line;
   }
   void traverse() override {
     std::cout << "Unary Expression:" << std::endl;
@@ -420,6 +427,7 @@ class PrototypeAST : public ExprAST {
         line(loc.line) {
     nodeName = "PrototypeAST";
     controlTo = 0;
+    loc.line = curLoc.line;
   }
   const std::string getName() const { return name; }
   bool isUnaryOp() { return (isOperator && (args.size() == 1)); }
@@ -483,6 +491,7 @@ class FunctionAST : public ExprAST {
   FunctionAST(PrototypeAST* proto, ExprAST* body) : proto(proto), body(body) {
     nodeName = "FunctionAST";
     controlTo = 0;
+    loc.line = curLoc.line;
   }
   void traverse() override {
     std::cout << "Function:" << std::endl;
@@ -536,6 +545,7 @@ class CallExprAST : public ExprAST {
       : ExprAST(loc), callee(callee), args(std::move(args)) {
     nodeName = "CallExprAST";
     controlTo = 0;
+    loc.line = curLoc.line;
   }
   void traverse() override {
     std::cout << "Call Expression:" << std::endl;
@@ -623,6 +633,7 @@ class IfExprAST : public ExprAST {
     ifcont->nodeName = "IfCont";
     ifcont->controlTo = 0;
     ifcont->isIfcont = true;
+    loc.line = curLoc.line;
   }
   void traverse() override {
     std::cout << "If Expression:" << std::endl;
@@ -676,7 +687,7 @@ class IfExprAST : public ExprAST {
   }
   void showControl() override {
     std::cout << nodeName << std::endl;
-    std::cout << "\nCondition (line: " << cond->loc.line << ") True:\n-> ";
+    std::cout << "\nCondition (line: " << cond->startNode->loc.line << ") True:\n-> ";
     if (controlEdgesTo.size() > 0)
       controlTo = controlTo % controlEdgesTo.size();
 
@@ -701,7 +712,7 @@ class IfExprAST : public ExprAST {
     if (controlTo < controlEdgesTo.size())
       controlEdgesTo[controlTo++]->showControl();
     std::cout << " (program exit)";
-    std::cout << "\n\nCondition (line: " << cond->loc.line << ") False:\n-> ";
+    std::cout << "\n\nCondition (line: " << cond->startNode->loc.line << ") False:\n-> ";
     if (controlEdgesTo.size() > 0)
       controlTo = controlTo % controlEdgesTo.size();
 
@@ -739,6 +750,7 @@ class ForExprAST : public ExprAST {
       : varName(varName), start(start), cond(cond), step(step), body(body) {
     nodeName = "ForExprAST";
     controlTo = 0;
+    loc.line = curLoc.line;
   }
   void traverse() override {
     std::cout << "For Expression:" << std::endl;
