@@ -485,7 +485,7 @@ void printControlFlow() {
     return;
   }
   neededFunctions.insert(std::pair<std::string, int>("main", 1));
-  std::cout << std::endl << "Control Flow:" << std::endl;
+  std::cout << std::endl << "CONTROL FLOW:" << std::endl << std::endl;
   definedFunctions["main"]->showControl();
   std::cout << "(program exit)" << std::endl;
 }
