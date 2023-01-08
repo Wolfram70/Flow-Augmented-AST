@@ -469,17 +469,13 @@ bool genDefinition() {
   if (auto fn = parseDefinition()) {
     definedFunctions.insert(
         std::pair<std::string, FunctionAST*>(fn->proto->name, fn));
-    std::cout << "Traversal: " << std::endl;
+    std::cout << "\nFUNCTION AST TRAVERSAL: " << std::endl;
     fn->traverse();
     varIds.clear();
     return true;
   }
   return false;
 }
-
-bool genExtern() { return false; }
-
-bool genTopLvlExpr() { return false; }
 
 // CHECK CONTROL FLOW
 

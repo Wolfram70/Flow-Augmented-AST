@@ -35,8 +35,4 @@ extern std::map<char, int> binOpPrecedence;
 extern SourceLocation curLoc;
 extern SourceLocation lexLoc;
 extern std::ifstream file;
-extern bool enableDebug;
-extern bool printDebug;
-extern bool printIR;
-extern std::string outFileName;
 extern std::string fileName;

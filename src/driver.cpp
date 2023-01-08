@@ -6,25 +6,11 @@ std::ifstream file;
 std::string fileName;
 
 extern bool genDefinition();
-extern bool genExtern();
-extern bool genTopLvlExpr();
 extern void printControlFlow();
 extern void printFuncCat();
 
 static void handleDefinition() {
   if (!genDefinition()) {
-    getNextToken();
-  }
-}
-
-static void handleExtern() {
-  if (!genExtern()) {
-    getNextToken();
-  }
-}
-
-static void handleTopLvlExpr() {
-  if (!genTopLvlExpr()) {
     getNextToken();
   }
 }
@@ -40,15 +26,6 @@ static void mainLoop() {
         break;
       case tok_def:
         handleDefinition();
-        break;
-      case tok_extern:
-        handleExtern();
-        break;
-      case tok_number:
-        handleTopLvlExpr();
-        break;
-      case tok_identifier:
-        handleTopLvlExpr();
         break;
       default:
         getNextToken();

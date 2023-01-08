@@ -244,6 +244,7 @@ class VarExprAST : public ExprAST {
       varIds.insert(std::pair<std::string, int>(var.first, var.second));
     }
     lastNode = body->lastNode;
+    std::cout << "end of Var Expression" << std::endl;
   }
   void showControl() override {
     std::cout << nodeName << " -> ";
@@ -286,7 +287,7 @@ class BinaryExprAST : public ExprAST {
     loc.line = curLoc.line;
   }
   void traverse() override {
-    std::cout << "Binary Expression:" << std::endl;
+    //std::cout << "Binary Expression:" << std::endl;
     if (op == ':') {
       LHS->traverse();
       int lhs = justused;
@@ -363,7 +364,7 @@ class UnaryExprAST : public ExprAST {
     loc.line = curLoc.line;
   }
   void traverse() override {
-    std::cout << "Unary Expression:" << std::endl;
+    //std::cout << "Unary Expression:" << std::endl;
     operand->traverse();
     for (auto jB : justBefore) {
       controlEdgesFrom.push_back(jB);
@@ -440,13 +441,13 @@ class PrototypeAST : public ExprAST {
       jB->controlEdgesTo.push_back(this);
     }
     startNode = this;
-    std::cout << "Prototype:" << std::endl;
-    std::cout << "Function: " << name << std::endl;
-    std::cout << "Arguments: ";
+    //std::cout << "Prototype:" << std::endl;
+    //std::cout << "Function: " << name << std::endl;
+    //std::cout << "Arguments: ";
     for (auto& arg : argString) {
       id++;
       int argId = id;
-      std::cout << "%" << argId << " : " << arg << " (variable) ";
+      std::cout << "%" << argId << " : " << arg << " (variable)" << std::endl;
       varIds.insert(std::pair<std::string, int>(arg, argId));
     }
     std::cout << std::endl;
@@ -494,7 +495,7 @@ class FunctionAST : public ExprAST {
     loc.line = curLoc.line;
   }
   void traverse() override {
-    std::cout << "Function:" << std::endl;
+    std::cout << "Function: " << proto->name << std::endl;
     justBefore.clear();
     justBefore.push_back(this);
     startNode = this;
@@ -548,7 +549,7 @@ class CallExprAST : public ExprAST {
     loc.line = curLoc.line;
   }
   void traverse() override {
-    std::cout << "Call Expression:" << std::endl;
+    //std::cout << "Call Expression:" << std::endl;
     std::vector<int> argIds;
     lastNode = this;
     for (auto& arg : args) {
@@ -636,7 +637,7 @@ class IfExprAST : public ExprAST {
     loc.line = curLoc.line;
   }
   void traverse() override {
-    std::cout << "If Expression:" << std::endl;
+    //std::cout << "If Expression:" << std::endl;
     for (auto jB : justBefore) {
       controlEdgesFrom.push_back(jB);
       jB->controlEdgesTo.push_back(this);
@@ -753,7 +754,7 @@ class ForExprAST : public ExprAST {
     loc.line = curLoc.line;
   }
   void traverse() override {
-    std::cout << "For Expression:" << std::endl;
+    //std::cout << "For Expression:" << std::endl;
     start->traverse();
     int startId = justused;
     cond->traverse();
