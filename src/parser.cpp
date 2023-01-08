@@ -22,8 +22,7 @@ int tempResolveTopLvlExpr = 0;
 ExprAST* parseNumberExpr();
 ExprAST* parseParenExpr();
 ExprAST* parsePrimary();
-ExprAST* parseBinOpRHS(int exprPrec,
-                                       ExprAST* LHS);
+ExprAST* parseBinOpRHS(int exprPrec, ExprAST* LHS);
 ExprAST* parseExpression();
 ExprAST* parseIdentifierExpr();
 PrototypeAST* parseProtoype();
@@ -37,12 +36,12 @@ ExprAST* parseVarExpr();
 
 int getNextToken() { return curTok = getToken(); }
 
-ExprAST* logError(const char *str) {
+ExprAST* logError(const char* str) {
   fprintf(stderr, "LogError: %s\n", str);
   return nullptr;
 }
 
-PrototypeAST* logErrorP(const char *str) {
+PrototypeAST* logErrorP(const char* str) {
   logError(str);
   return nullptr;
 }
@@ -158,8 +157,7 @@ ExprAST* parseForExpr() {
     return nullptr;
   }
 
-  return new ForExprAST(idName, start, cond,
-                        step, body);
+  return new ForExprAST(idName, start, cond, step, body);
 }
 
 ExprAST* parseVarExpr() {
@@ -225,8 +223,7 @@ int getTokPrecedence() {
   return tokPrec;
 }
 
-ExprAST* parseBinOpRHS(int exprPrec,
-                                       ExprAST* LHS) {
+ExprAST* parseBinOpRHS(int exprPrec, ExprAST* LHS) {
   while (true) {
     int tokPrec = getTokPrecedence();
 
@@ -430,7 +427,8 @@ PrototypeAST* parseProtoype() {
     return logErrorP("Invalid number of operands for an operator");
   }
 
-  return new PrototypeAST(fnLoc, fnName, argNames, argString, kind != 0, binaryPrecedence);
+  return new PrototypeAST(fnLoc, fnName, argNames, argString, kind != 0,
+                          binaryPrecedence);
 }
 
 FunctionAST* parseDefinition() {
@@ -458,20 +456,18 @@ FunctionAST* parseTopLvlExpr() {
   SourceLocation exprLoc = curLoc;
 
   if (auto exp = parseExpression()) {
-    auto proto = new PrototypeAST(
-        exprLoc, "main", std::vector<ExprAST*>(),
-        std::vector<std::string>());
+    auto proto = new PrototypeAST(exprLoc, "main", std::vector<ExprAST*>(),
+                                  std::vector<std::string>());
     return new FunctionAST(proto, exp);
   }
 
   return nullptr;
 }
 
-bool genDefinition()
-{
-  if(auto fn = parseDefinition())
-  {
-    definedFunctions.insert(std::pair<std::string, FunctionAST*>(fn->proto->name, fn));
+bool genDefinition() {
+  if (auto fn = parseDefinition()) {
+    definedFunctions.insert(
+        std::pair<std::string, FunctionAST*>(fn->proto->name, fn));
     std::cout << "Traversal: " << std::endl;
     fn->traverse();
     varIds.clear();
@@ -484,37 +480,39 @@ bool genExtern() { return false; }
 
 bool genTopLvlExpr() { return false; }
 
-//CHECK CONTROL FLOW
+// CHECK CONTROL FLOW
 
-void printControlFlow()
-{
-  if(!definedFunctions.contains("main"))
-  {
+void printControlFlow() {
+  if (!definedFunctions.contains("main")) {
     std::cout << "No main function (entry point) defined" << std::endl;
     return;
   }
   neededFunctions.insert(std::pair<std::string, int>("main", 1));
   std::cout << std::endl << "Control Flow:" << std::endl;
   definedFunctions["main"]->showControl();
+  std::cout << "(program exit)" << std::endl;
 }
 
-void printFuncCat()
-{
-  std::cout << std::endl << std::endl << "Based on the control flow, we can assess the following:" << std::endl;
-  std::cout << "The functions which are called (that is need to be compiled and linked) are:" << std::endl;
-  for(auto it = definedFunctions.begin(); it != definedFunctions.end(); it++)
-  {
-    if(neededFunctions.contains(it->first))
-    {
+void printFuncCat() {
+  std::cout << std::endl
+            << std::endl
+            << "Based on the control flow, we can assess the following:"
+            << std::endl;
+  std::cout << "The functions which are called (that is need to be compiled "
+               "and linked) are:"
+            << std::endl;
+  for (auto it = definedFunctions.begin(); it != definedFunctions.end(); it++) {
+    if (neededFunctions.contains(it->first)) {
       std::cout << it->first << std::endl;
     }
   }
 
-  std::cout << std::endl << "The functions which are not called (that is do not need to be compiled and linked) are:" << std::endl;
-  for(auto it = definedFunctions.begin(); it != definedFunctions.end(); it++)
-  {
-    if(!neededFunctions.contains(it->first))
-    {
+  std::cout << std::endl
+            << "The functions which are not called (that is do not need to be "
+               "compiled and linked) are:"
+            << std::endl;
+  for (auto it = definedFunctions.begin(); it != definedFunctions.end(); it++) {
+    if (!neededFunctions.contains(it->first)) {
       std::cout << it->first << std::endl;
     }
   }
