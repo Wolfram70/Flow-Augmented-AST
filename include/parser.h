@@ -450,6 +450,25 @@ class PrototypeAST : public ExprAST {
     std::cout << nodeName << " (" << name << ") -> ";
     if (controlEdgesTo.size() > 0)
       controlTo = controlTo % controlEdgesTo.size();
+
+    bool foundReturn = false;
+
+    if(isFuncEnd && (controlEdgesTo.size() > 0)) {
+      if(controlEdgesTo[controlTo]->isIfcont) {
+        for(auto p : alreadyReturnedIfcont) {
+          if((p.second == funcDetails.first) && (p.first == controlEdgesTo[controlTo])) {
+            controlTo++;
+            foundReturn = true;
+            break;
+          } //if end
+        } //for end
+        if(!foundReturn) {
+          alreadyReturnedIfcont.insert(std::pair<ExprAST*, std::string>(controlEdgesTo[controlTo], funcDetails.first));
+        }
+      }
+    } //if end
+
+
     if (controlTo < controlEdgesTo.size())
       controlEdgesTo[controlTo++]->showControl();
   }
@@ -482,6 +501,25 @@ class FunctionAST : public ExprAST {
     std::cout << nodeName << " (" << proto->name << ") -> ";
     if (controlEdgesTo.size() > 0)
       controlTo = controlTo % controlEdgesTo.size();
+
+    bool foundReturn = false;
+
+    if(isFuncEnd && (controlEdgesTo.size() > 0)) {
+      if(controlEdgesTo[controlTo]->isIfcont) {
+        for(auto p : alreadyReturnedIfcont) {
+          if((p.second == funcDetails.first) && (p.first == controlEdgesTo[controlTo])) {
+            controlTo++;
+            foundReturn = true;
+            break;
+          } //if end
+        } //for end
+        if(!foundReturn) {
+          alreadyReturnedIfcont.insert(std::pair<ExprAST*, std::string>(controlEdgesTo[controlTo], funcDetails.first));
+        }
+      }
+    } //if end
+
+
     if(controlTo < controlEdgesTo.size())
       controlEdgesTo[controlTo++]->showControl();
   }
@@ -548,6 +586,25 @@ class CallExprAST : public ExprAST {
       neededFunctions.insert(std::pair<std::string, int>(callee, 0));
     if (controlEdgesTo.size() > 0)
       controlTo = controlTo % controlEdgesTo.size();
+
+    bool foundReturn = false;
+
+    if(isFuncEnd && (controlEdgesTo.size() > 0)) {
+      if(controlEdgesTo[controlTo]->isIfcont) {
+        for(auto p : alreadyReturnedIfcont) {
+          if((p.second == funcDetails.first) && (p.first == controlEdgesTo[controlTo])) {
+            controlTo++;
+            foundReturn = true;
+            break;
+          } //if end
+        } //for end
+        if(!foundReturn) {
+          alreadyReturnedIfcont.insert(std::pair<ExprAST*, std::string>(controlEdgesTo[controlTo], funcDetails.first));
+        }
+      }
+    } //if end
+
+
     if (controlTo < controlEdgesTo.size())
       controlEdgesTo[controlTo++]->showControl();
   }
@@ -622,12 +679,50 @@ class IfExprAST : public ExprAST {
     std::cout << "\nCondition (line: " << cond->loc.line << ") True:\n-> ";
     if (controlEdgesTo.size() > 0)
       controlTo = controlTo % controlEdgesTo.size();
+
+    bool foundReturn = false;
+
+    if(isFuncEnd && (controlEdgesTo.size() > 0)) {
+      if(controlEdgesTo[controlTo]->isIfcont) {
+        for(auto p : alreadyReturnedIfcont) {
+          if((p.second == funcDetails.first) && (p.first == controlEdgesTo[controlTo])) {
+            controlTo++;
+            foundReturn = true;
+            break;
+          } //if end
+        } //for end
+        if(!foundReturn) {
+          alreadyReturnedIfcont.insert(std::pair<ExprAST*, std::string>(controlEdgesTo[controlTo], funcDetails.first));
+        }
+      }
+    } //if end
+
+
     if (controlTo < controlEdgesTo.size())
       controlEdgesTo[controlTo++]->showControl();
     std::cout << " (program exit)";
     std::cout << "\n\nCondition (line: " << cond->loc.line << ") False:\n-> ";
     if (controlEdgesTo.size() > 0)
       controlTo = controlTo % controlEdgesTo.size();
+
+    foundReturn = false;
+
+    if(isFuncEnd && (controlEdgesTo.size() > 0)) {
+      if(controlEdgesTo[controlTo]->isIfcont) {
+        for(auto p : alreadyReturnedIfcont) {
+          if((p.second == funcDetails.first) && (p.first == controlEdgesTo[controlTo])) {
+            controlTo++;
+            foundReturn = true;
+            break;
+          } //if end
+        } //for end
+        if(!foundReturn) {
+          alreadyReturnedIfcont.insert(std::pair<ExprAST*, std::string>(controlEdgesTo[controlTo], funcDetails.first));
+        }
+      }
+    } //if end
+
+
     if (controlTo < controlEdgesTo.size())
       controlEdgesTo[controlTo++]->showControl();
   }
@@ -671,6 +766,25 @@ class ForExprAST : public ExprAST {
     std::cout << nodeName << " -> " << std::endl;
     if (controlEdgesTo.size() > 0)
       controlTo = controlTo % controlEdgesTo.size();
+
+    bool foundReturn = false;
+
+    if(isFuncEnd && (controlEdgesTo.size() > 0)) {
+      if(controlEdgesTo[controlTo]->isIfcont) {
+        for(auto p : alreadyReturnedIfcont) {
+          if((p.second == funcDetails.first) && (p.first == controlEdgesTo[controlTo])) {
+            controlTo++;
+            foundReturn = true;
+            break;
+          } //if end
+        } //for end
+        if(!foundReturn) {
+          alreadyReturnedIfcont.insert(std::pair<ExprAST*, std::string>(controlEdgesTo[controlTo], funcDetails.first));
+        }
+      }
+    } //if end
+
+
     if (controlTo < controlEdgesTo.size())
       controlEdgesTo[controlTo++]->showControl();
   }
