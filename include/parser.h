@@ -288,25 +288,6 @@ class BinaryExprAST : public ExprAST {
   }
   void traverse() override {
     //std::cout << "Binary Expression:" << std::endl;
-    if (op == ':') {
-      LHS->traverse();
-      int lhs = justused;
-      RHS->traverse();
-      int rhs = justused;
-      id++;
-      std::cout << "%" << id << " = %" << lhs << " " << op << " %" << rhs
-                << std::endl;
-      justused = id;
-      for (auto jB : justBefore) {
-        controlEdgesFrom.push_back(jB);
-        jB->controlEdgesTo.push_back(this);
-      }
-      justBefore.clear();
-      justBefore.push_back(this);
-      startNode = LHS->startNode;
-      lastNode = this;
-      return;
-    }
     LHS->traverse();
     int lhs = justused;
     RHS->traverse();
