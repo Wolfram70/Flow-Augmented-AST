@@ -5,6 +5,9 @@ extern int getNextToken();
 std::ifstream file;
 std::string fileName;
 
+bool printControl = false;
+bool printFunc = false;
+
 extern bool genDefinition();
 extern void printControlFlow();
 extern void printFuncCat();
@@ -41,10 +44,28 @@ int main(int argc, char **argv) {
   }
 
   std::string arg;
+  char choice;
 
   for (int i = 1; i < argc; i++) {
     switch (argv[i][0]) {
       case '-':
+        choice = argv[i][1];
+        arg = argv[i];
+        if(arg.length() > 2) {
+          std::cout << "Invalid argument \"" << argv[i] << "\"" << std::endl;
+          return 1;
+        }
+        switch (choice) {
+          case 'c':
+            printControl = true;
+            break;
+          case 'f':
+            printFunc = true;
+            break;
+          default:
+            std::cout << "Invalid argument \"" << argv[i] << "\"" << std::endl;
+            return 1;
+        }
         break;
       default:
         fileName = argv[i];
@@ -71,9 +92,9 @@ int main(int argc, char **argv) {
 
   mainLoop();
 
-  printControlFlow();
+  if(printControl) printControlFlow();
 
-  printFuncCat();
+  if(printFunc) printFuncCat();
 
   return 0;
 }
