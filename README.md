@@ -41,16 +41,43 @@ For example:
         
 ## Sample Code
 
+
 <b>Text File: </b>
 
-<img width="584" alt="Screenshot 2023-01-11 at 8 34 49 PM" src="https://user-images.githubusercontent.com/108116233/211840709-05f90f12-3075-4171-98eb-2fe8439f93f0.png">
+
+<img width="672" alt="Screenshot 2023-01-11 at 9 59 35 PM" src="https://user-images.githubusercontent.com/108116233/211861789-2cf14a11-5c32-46e3-b915-c311db92935b.png">
+
 
 <b>Program Output: </b>
+
 
 <img width="1059" alt="Screenshot 2023-01-11 at 8 36 57 PM" src="https://user-images.githubusercontent.com/108116233/211841248-48b4a813-30a5-4ce9-a27b-27887fffeca9.png">
 
 ## Custom Programming Language
 
 The entry point for execution in the program is the main function.
-Variables defined in the function prototype
 
+### Datatypes and Variables
+
+Variables shouldn't be declared with their corresponding datatypes. All variables are implicitly double data type.
+
+        int a = 5 //incorrect syntax
+
+Variables can only be declared in the function prototype. Details about this have been mentioned later under the <b>Functions</b> subheading.
+
+### Functions
+
+To declare a function use the `def` keyword. 
+        
+        def <function_name>(<var_1>,<var_2>...<var_n>)
+              <var_1> = 10
+             
+Variables can <b>only</b> be declared in the function prototype and thereafter used within the function.
+
+        def main(a,b,c)
+              a=10: //valid
+              b=20: //valid
+              c=30: //valid
+              d=40; //error!!! variable undeclared
+
+All statements within a block are terminated with a `colon (:)` except the last statement of a block which ends with a `semicolon (;)`. The `semicolon (;)` marks the end of a code block. Statements after it are ignored.
