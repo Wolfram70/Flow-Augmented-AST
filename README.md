@@ -79,7 +79,7 @@ To declare a function use the `def` keyword.
             <var_1> = 10:
             <var_2> = 20;
 
-Variables are declared in the function prototype and thereafter used within the function.
+Variables can also be declared in the function prototype and thereafter be used within the function.
 
         def main(a,b,c)
             a=10:  #valid
@@ -103,7 +103,7 @@ All statements within a block are terminated with a `colon (:)` except the last 
 The language supports the if-else construct. The following example illustrates the syntax:
 
         def main(a,b,c,d)
-           if ( a < b ) then ( c = 10 ) else ( d = 20 );
+            if ( a < b ) then ( c = 10 ) else ( d = 20 );
 
 
 
