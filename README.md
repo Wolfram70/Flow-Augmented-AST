@@ -55,29 +55,54 @@ For example:
 
 ## Custom Programming Language
 
-The entry point for execution in the program is the main function.
+The entry point for execution of the program is the main function.
+`Tabs` are treated as `invalid tokens`.
 
 ### Datatypes and Variables
 
 Variables shouldn't be declared with their corresponding datatypes. All variables are implicitly double data type.
 
-        int a = 5 //incorrect syntax
+        int a = 5; //incorrect syntax
+        
+Variables can be declared using the ```var``` keyword but their scope is limited to the block that follows. The following example illustrates the syntax:
 
-Variables can only be declared in the function prototype. Details about this have been mentioned later under the <b>Functions</b> subheading.
+        var a = 5, b = a, c = 6 in (# code);
+
+
+Variables can also be declared <b>only</b> in the function prototype. Details about this have been mentioned later under the <b>Functions</b> subheading.
 
 ### Functions
 
 To declare a function use the `def` keyword. 
         
         def <function_name>(<var_1>,<var_2>...<var_n>)
-              <var_1> = 10
-             
-Variables can <b>only</b> be declared in the function prototype and thereafter used within the function.
+             <var_1> = 10:
+             <var_2> = 20;
+
+Variables are declared in the function prototype and thereafter used within the function.
 
         def main(a,b,c)
-              a=10: //valid
-              b=20: //valid
-              c=30: //valid
-              d=40; //error!!! variable undeclared
+            a=10:  #valid
+            b=20:  #valid
+            c=30:  #valid
+            d=40;  #error!!! variable undeclared
+              
+The last expression evaluated within the function block is returned to the callee.
 
-All statements within a block are terminated with a `colon (:)` except the last statement of a block which ends with a `semicolon (;)`. The `semicolon (;)` marks the end of a code block. Statements after it are ignored.
+        def foo1(a,b)
+            a:a+b;       # the value of a is returned by the function
+
+        def main()
+            foo1(5,6);
+
+
+All statements within a block are terminated with a `colon (:)` except the last statement of a block which ends with a `semicolon (;)`. The `semicolon (;)` marks the end of a code block. Statements after it are ignored. If the block contains only one line of code terminate it with a `semicolon (;)`.
+
+### Conditional Statements
+
+The language supports the if-else construct. The following example illustrates the syntax:
+
+
+
+
+
