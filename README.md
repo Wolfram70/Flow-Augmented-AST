@@ -19,19 +19,21 @@ A C++20 compatible compiler (e.g. GCC 8.0 or higher, Clang 4 or higher)
 
       <b>In Clang++</b>
 
-           g++ src/*.cpp -std=c++20
+           clang++ src/*.cpp -std=c++20 -o <file_name>
 
       <b>In GCC</b>
 
-           g++ src/*.cpp -std=c++2a
+           g++ src/*.cpp -std=c++2a -o <file_name>
 
 4. Create a new text file say `code.txt`
 
-5. Compile the file
+5. Write some code in the custom programming language
 
-        ./parser code.txt
+6. Compile the file
 
-Necessary flags can also be passed as arguments. Using `-c` will show the control flow of the program and using `-f` would output all the function names in the program, demarcating redundant functions from the used ones.
+        ./<file_name> code.txt
+
+Necessary flags can also be passed as arguments. Using `-c` will show the control flow of the program and using `-f` will output all the function names in the program, demarcating redundant functions from the used ones.
 
 For example:
         
@@ -46,3 +48,9 @@ For example:
 <b>Program Output: </b>
 
 <img width="1059" alt="Screenshot 2023-01-11 at 8 36 57 PM" src="https://user-images.githubusercontent.com/108116233/211841248-48b4a813-30a5-4ce9-a27b-27887fffeca9.png">
+
+## Custom Programming Language
+
+The entry point for execution in the program is the main function.
+Variables defined in the function prototype
+
