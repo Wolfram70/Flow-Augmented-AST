@@ -76,8 +76,8 @@ Variables can also be declared <b>only</b> in the function prototype. Details ab
 To declare a function use the `def` keyword. 
         
         def <function_name>(<var_1>,<var_2>...<var_n>)
-             <var_1> = 10:
-             <var_2> = 20;
+            <var_1> = 10:
+            <var_2> = 20;
 
 Variables are declared in the function prototype and thereafter used within the function.
 
@@ -101,6 +101,9 @@ All statements within a block are terminated with a `colon (:)` except the last 
 ### Conditional Statements
 
 The language supports the if-else construct. The following example illustrates the syntax:
+
+        def main(a,b,c,d)
+           if ( a < b ) then ( c = 10 ) else ( d = 20 );
 
 
 
